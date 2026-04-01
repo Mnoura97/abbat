@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AB.BAT – Tableau de bord</title>
+  <link rel="stylesheet" href="css/app.css"/>
+</head>
+<body>
+
+
+<!-- Overlay sidebar mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">A</div>
+    <span class="logo-text"><span class="blue">AB.</span><span class="org">BAT</span></span>
+  </div>
+  <nav class="nav">
+    <a href="dashboard.html" class="nav-item active">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Tableau de bord
+    </a>
+    <a href="fournisseurs.html" class="nav-item">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+      Fournisseurs
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <a href="admin-users.html" class="nav-item" title="Administration" style="opacity:0.3;transition:opacity .2s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.3">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+      Admin
+    </a>
+    <a href="php/logout.php" class="nav-item">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      Déconnexion
+    </a>
+  </div>
+</aside>
+
+<div class="page">
+  <div class="page-inner">
+
+    <div class="page-header">
+      <button class="hamburger" id="hamburgerBtn" onclick="openSidebar()" style="display:none">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <h1 class="page-title">Tableau de bord</h1>
+      <a href="fournisseurs.html" class="btn btn-primary">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16"/></svg>
+        Voir les fournisseurs
+      </a>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid" id="kpiGrid">
+      <div class="kpi-card"><div class="skel" style="height:11px;width:55%;margin-bottom:12px"></div><div class="skel" style="height:28px;width:40%"></div></div>
+      <div class="kpi-card"><div class="skel" style="height:11px;width:55%;margin-bottom:12px"></div><div class="skel" style="height:28px;width:60%"></div></div>
+      <div class="kpi-card"><div class="skel" style="height:11px;width:55%;margin-bottom:12px"></div><div class="skel" style="height:28px;width:60%"></div></div>
+      <div class="kpi-card"><div class="skel" style="height:11px;width:55%;margin-bottom:12px"></div><div class="skel" style="height:28px;width:60%"></div></div>
+    </div>
+
+    <!-- Grille bas -->
+    <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:16px">
+
+      <div class="card" style="padding:26px">
+        <h2 class="display" style="font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:22px">Répartition par catégorie</h2>
+        <div id="catList">
+          <div class="skel" style="height:13px;margin-bottom:20px"></div>
+          <div class="skel" style="height:13px;margin-bottom:20px;width:80%"></div>
+          <div class="skel" style="height:13px;width:60%"></div>
+        </div>
+      </div>
+
+      <div class="card" style="padding:26px">
+        <h2 class="display" style="font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:22px">Progression globale</h2>
+        <div id="progressBlock">
+          <div class="skel" style="height:130px;border-radius:10px"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const fmt = v => new Intl.NumberFormat('fr-FR', { style: 'decimal', maximumFractionDigits: 0 }).format(v) + ' FCFA';
+const fmt2 = v => new Intl.NumberFormat('fr-FR', { style: 'decimal', maximumFractionDigits: 0 }).format(v) + ' FCFA';
+
+async function load() {
+  const r = await fetch('php/api.php?action=dashboard');
+  const { data: d } = await r.json();
+  const pct = d.montant_total > 0 ? Math.min(100, Math.round(d.montant_paye / d.montant_total * 100)) : 0;
+  const isSolde = d.montant_total > 0 && d.montant_paye >= d.montant_total;
+
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi-card" style="--accent:#3b82f6">
+      <div class="kpi-label">Fournisseurs</div>
+      <div class="kpi-value display">${d.total_fournisseurs}</div>
+    </div>
+    <div class="kpi-card" style="--accent:#3b82f6">
+      <div class="kpi-label">Montant total</div>
+      <div class="kpi-value display" style="color:#3b82f6;font-size:21px">${fmt(d.montant_total)}</div>
+    </div>
+    <div class="kpi-card" style="--accent:#22d3a0">
+      <div class="kpi-label">Montant payé</div>
+      <div class="kpi-value display" style="color:#22d3a0;font-size:21px">${fmt(d.montant_paye)}</div>
+    </div>
+    <div class="kpi-card" style="--accent:#f97316">
+      <div class="kpi-label">Restant à payer</div>
+      <div class="kpi-value display" style="color:#f97316;font-size:21px">${fmt(d.montant_restant)}</div>
+    </div>`;
+
+  document.getElementById('catList').innerHTML = d.par_categorie.length
+    ? d.par_categorie.map(c => {
+        const p = d.montant_total > 0 ? Math.round(c.total / d.montant_total * 100) : 0;
+        return `<div class="cat-bar">
+          <div class="cat-bar-header">
+            <span style="display:flex;align-items:center;gap:8px">
+              <span style="width:9px;height:9px;border-radius:50%;background:${c.couleur};display:inline-block;flex-shrink:0"></span>
+              ${c.nom} <span style="color:var(--text3);font-size:11px">(${c.nb})</span>
+            </span>
+            <span style="color:var(--text2);font-size:12px;font-weight:600">${fmt(c.total)}</span>
+          </div>
+          <div class="cat-bar-track"><div class="cat-bar-fill" style="width:0%;background:${c.couleur}" data-w="${p}"></div></div>
+        </div>`;
+      }).join('')
+    : '<p style="color:var(--text3);font-size:13px">Aucune donnée.</p>';
+
+  document.getElementById('progressBlock').innerHTML = `
+    <div style="margin-bottom:22px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+        <span style="font-size:13px;color:var(--text2)">Taux de règlement</span>
+        <span class="display" style="font-size:40px;font-weight:800;color:var(--green)">${isSolde ? '✓ Soldé' : pct + '%'}</span>
+      </div>
+      <div style="height:8px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden">
+        <div id="mainBar" data-w="${pct}" style="height:100%;border-radius:99px;background:linear-gradient(90deg,#22d3a0,#3b82f6);transition:width 1.3s cubic-bezier(.4,0,.2,1);width:0%"></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="background:rgba(34,211,160,.07);border:1px solid rgba(34,211,160,.18);border-radius:10px;padding:16px">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:rgba(34,211,160,.6);margin-bottom:6px;font-weight:600">Payé</div>
+        <div class="display" style="font-size:16px;font-weight:700;color:#22d3a0">${fmt2(d.montant_paye)}</div>
+      </div>
+      <div style="background:rgba(249,115,22,.07);border:1px solid rgba(249,115,22,.18);border-radius:10px;padding:16px">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:rgba(249,115,22,.6);margin-bottom:6px;font-weight:600">Restant</div>
+        <div class="display" style="font-size:16px;font-weight:700;color:#f97316">${fmt2(d.montant_restant)}</div>
+      </div>
+    </div>`;
+
+  setTimeout(() => {
+    document.querySelectorAll('.cat-bar-fill[data-w]').forEach(el => el.style.width = el.dataset.w + '%');
+    const mb = document.getElementById('mainBar');
+    if (mb) mb.style.width = mb.dataset.w + '%';
+  }, 100);
+}
+
+load();
+</script>
+</body>
+</html>

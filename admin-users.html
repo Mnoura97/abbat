@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AB.BAT – Administration utilisateurs</title>
+  <link rel="stylesheet" href="css/app.css"/>
+  <style>
+    .user-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 8px;
+      gap: 12px;
+      transition: border-color .15s;
+    }
+    .user-row:hover { border-color: var(--border2); }
+
+    .user-avatar {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: rgba(249,115,22,.12);
+      border: 1px solid rgba(249,115,22,.2);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700; font-size: 17px;
+      color: var(--orange);
+      flex-shrink: 0;
+    }
+    .user-avatar.admin-av {
+      background: rgba(59,130,246,.12);
+      border-color: rgba(59,130,246,.25);
+      color: var(--blue);
+    }
+
+    .pin-status {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 9px; border-radius: 99px;
+      font-size: 11px; font-weight: 600;
+    }
+    .pin-ok  { background: rgba(34,211,160,.1); color: #22d3a0; border: 1px solid rgba(34,211,160,.2); }
+    .pin-no  { background: rgba(244,63,94,.1);  color: #f43f5e; border: 1px solid rgba(244,63,94,.2); }
+
+    .pin-pad { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; max-width:220px; margin:12px auto 0; }
+    .pin-btn { padding:13px; border-radius:9px; background:var(--bg3); border:1px solid var(--border); color:var(--text); font-size:17px; font-weight:700; cursor:pointer; transition:all .15s; font-family:'Barlow Condensed',sans-serif; }
+    .pin-btn:hover { border-color:var(--orange); color:var(--orange); background:rgba(249,115,22,.05); }
+    .pin-dots { display:flex; gap:8px; justify-content:center; margin:14px 0 4px; }
+    .pin-dot { width:12px; height:12px; border-radius:50%; background:var(--border2); transition:background .15s; }
+    .pin-dot.filled { background:var(--orange); }
+    .pin-error { color:var(--red); font-size:12px; text-align:center; min-height:16px; margin-top:6px; }
+
+    .section-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 14px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1.2px;
+      color: var(--text3);
+      margin-bottom: 14px;
+    }
+  </style>
+</head>
+<body>
+
+
+<!-- Overlay sidebar mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">A</div>
+    <span class="logo-text"><span class="blue">AB.</span><span class="org">BAT</span></span>
+  </div>
+  <nav class="nav">
+    <a href="dashboard.html" class="nav-item">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Tableau de bord
+    </a>
+    <a href="fournisseurs.html" class="nav-item">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+      Fournisseurs
+    </a>
+    <a href="admin-users.html" class="nav-item active">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+      Utilisateurs
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <a href="php/logout.php" class="nav-item">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      Déconnexion
+    </a>
+  </div>
+</aside>
+
+<div class="page">
+  <div class="page-inner" style="max-width:700px">
+
+    <div class="page-header">
+      <button class="hamburger" id="hamburgerBtn" onclick="openSidebar()" style="display:none">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div>
+        <h1 class="page-title">Utilisateurs & PINs</h1>
+        <p style="color:var(--text3);font-size:13px;margin-top:4px">Raccourci : <kbd style="background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:2px 7px;font-size:12px">Ctrl+U</kbd> depuis n'importe quelle page</p>
+      </div>
+    </div>
+
+    <!-- Déverrouillage admin -->
+    <div id="lockScreen" class="card" style="padding:28px;text-align:center;margin-bottom:20px">
+      <div style="width:50px;height:50px;border-radius:14px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
+        <svg style="width:24px;height:24px;color:var(--blue)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+      </div>
+      <h2 class="display" style="font-size:20px;font-weight:700;margin-bottom:6px">PIN Administrateur requis</h2>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:4px">Entrez le PIN admin pour accéder à la gestion des utilisateurs</p>
+      <div class="pin-dots" id="lockDots">
+        <div class="pin-dot" id="ld0"></div>
+        <div class="pin-dot" id="ld1"></div>
+        <div class="pin-dot" id="ld2"></div>
+        <div class="pin-dot" id="ld3"></div>
+        <div class="pin-dot" id="ld4"></div>
+      </div>
+      <div class="pin-pad">
+        <button class="pin-btn" onclick="lockKey('1')">1</button>
+        <button class="pin-btn" onclick="lockKey('2')">2</button>
+        <button class="pin-btn" onclick="lockKey('3')">3</button>
+        <button class="pin-btn" onclick="lockKey('4')">4</button>
+        <button class="pin-btn" onclick="lockKey('5')">5</button>
+        <button class="pin-btn" onclick="lockKey('6')">6</button>
+        <button class="pin-btn" onclick="lockKey('7')">7</button>
+        <button class="pin-btn" onclick="lockKey('8')">8</button>
+        <button class="pin-btn" onclick="lockKey('9')">9</button>
+        <button class="pin-btn" onclick="lockKey('del')">⌫</button>
+        <button class="pin-btn" onclick="lockKey('0')">0</button>
+        <button class="pin-btn" onclick="verifyAdminPin()" style="background:rgba(249,115,22,.15);border-color:rgba(249,115,22,.4);color:var(--orange);font-weight:800">✓</button>
+      </div>
+      <button onclick="lockKey('clear')" style="margin-top:10px;background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;text-decoration:underline">Annuler</button>
+      <div class="pin-error" id="lockError"></div>
+    </div>
+
+    <!-- Contenu admin (caché jusqu'à PIN validé) -->
+    <div id="adminContent" style="display:none">
+
+      <!-- Liste utilisateurs -->
+      <div style="margin-bottom:28px">
+        <div class="section-title">Utilisateurs enregistrés</div>
+        <div id="userList"><p style="color:var(--text3);font-size:13px">Chargement…</p></div>
+      </div>
+
+      <!-- Ajouter utilisateur -->
+      <div class="card" style="padding:24px">
+        <div class="section-title">Ajouter un utilisateur</div>
+        <div class="form-row" style="margin-bottom:14px">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Nom d'utilisateur</label>
+            <input id="newUsername" class="input-field" type="text" placeholder="Ex : Brou, Konan…"/>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Code PIN (4 chiffres min.)</label>
+            <input id="newUserPin" class="input-field" type="password" placeholder="••••" maxlength="8"/>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="addUser()" id="addBtn">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          Ajouter l'utilisateur
+        </button>
+        <p id="addMsg" style="margin-top:10px;font-size:13px;min-height:18px"></p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Modal modifier PIN -->
+<div id="editPinModal" class="modal-overlay">
+  <div class="modal" style="max-width:380px;text-align:center">
+    <div class="modal-header" style="justify-content:space-between">
+      <span class="modal-title" id="editPinTitle">Modifier le PIN</span>
+      <button class="modal-close" onclick="document.getElementById('editPinModal').classList.remove('open')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <input type="hidden" id="editPinUserId"/>
+    <div class="form-group" style="text-align:left">
+      <label class="form-label">Nouveau PIN</label>
+      <input id="editPinValue" class="input-field" type="password" placeholder="••••" maxlength="8"/>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="document.getElementById('editPinModal').classList.remove('open')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveEditPin()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let adminPinUnlocked = '';
+
+// ── Lock screen PIN ──────────────────────────────────────
+let lockBuffer = '';
+
+function lockKey(k) {
+  if (k === 'del')   { lockBuffer = lockBuffer.slice(0,-1); updateLockDots(); return; }
+  if (k === 'clear') { lockBuffer = ''; updateLockDots(); return; }
+  if (lockBuffer.length >= 8) return;
+  lockBuffer += k;
+  updateLockDots();
+}
+
+function updateLockDots() {
+  for (let i = 0; i < 5; i++) {
+    const el = document.getElementById('ld'+i);
+    if (el) el.classList.toggle('filled', i < lockBuffer.length);
+  }
+}
+
+async function verifyAdminPin() {
+  const r = await fetch('php/verify-pin.php', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({pin:lockBuffer}) });
+  const d = await r.json();
+  if (d.success && d.username === 'admin') {
+    adminPinUnlocked = lockBuffer;
+    document.getElementById('lockScreen').style.display = 'none';
+    document.getElementById('adminContent').style.display = 'block';
+    loadUsers();
+  } else {
+    document.getElementById('lockError').textContent = d.username && d.username !== 'admin' ? 'Accès réservé à l\'administrateur.' : (d.message || 'PIN incorrect.');
+    lockBuffer = '';
+    updateLockDots();
+  }
+}
+
+// ── Charger utilisateurs ─────────────────────────────────
+async function loadUsers() {
+  const r = await fetch('php/admin-users.php');
+  const { data } = await r.json();
+
+  document.getElementById('userList').innerHTML = data.map(u => `
+    <div class="user-row">
+      <div class="user-avatar ${u.username==='admin'?'admin-av':''}">${u.username.charAt(0).toUpperCase()}</div>
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:15px">${u.username} ${u.username==='admin'?'<span style="font-size:11px;color:var(--blue);background:rgba(59,130,246,.1);padding:2px 7px;border-radius:99px;border:1px solid rgba(59,130,246,.2)">admin</span>':''}</div>
+        <span class="pin-status ${u.has_pin?'pin-ok':'pin-no'}">${u.has_pin?'✓ PIN défini':'✗ Pas de PIN'}</span>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-ghost" style="padding:7px 12px;font-size:12px" onclick="openEditPin(${u.id},'${u.username}')">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:13px;height:13px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          PIN
+        </button>
+        ${u.username !== 'admin' ? `
+        <button class="btn" style="padding:7px 12px;font-size:12px;background:rgba(244,63,94,.1);color:var(--red);border:1px solid rgba(244,63,94,.2)" onclick="deleteUser(${u.id},'${u.username}')">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:13px;height:13px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          Supprimer
+        </button>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Ajouter utilisateur ──────────────────────────────────
+async function addUser() {
+  const username = document.getElementById('newUsername').value.trim();
+  const pin      = document.getElementById('newUserPin').value.trim();
+  const msg      = document.getElementById('addMsg');
+  const btn      = document.getElementById('addBtn');
+
+  if (!username || !pin) { msg.style.color='var(--red)'; msg.textContent='Nom et PIN obligatoires.'; return; }
+
+  btn.textContent = '…'; btn.disabled = true;
+  const r = await fetch('php/admin-users.php?action=add', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({admin_pin:adminPinUnlocked, username, pin}) });
+  const d = await r.json();
+  btn.textContent = '+ Ajouter l\'utilisateur'; btn.disabled = false;
+
+  if (d.success) {
+    msg.style.color = 'var(--green)';
+    msg.textContent = d.data.message;
+    document.getElementById('newUsername').value = '';
+    document.getElementById('newUserPin').value = '';
+    loadUsers();
+  } else {
+    msg.style.color = 'var(--red)';
+    msg.textContent = d.message;
+  }
+}
+
+// ── Modifier PIN ─────────────────────────────────────────
+function openEditPin(id, username) {
+  document.getElementById('editPinUserId').value = id;
+  document.getElementById('editPinTitle').textContent = `PIN de ${username}`;
+  document.getElementById('editPinValue').value = '';
+  document.getElementById('editPinModal').classList.add('open');
+}
+
+async function saveEditPin() {
+  const id  = document.getElementById('editPinUserId').value;
+  const pin = document.getElementById('editPinValue').value.trim();
+  const r   = await fetch(`php/admin-users.php?id=${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({admin_pin:adminPinUnlocked, pin}) });
+  const d   = await r.json();
+  if (d.success) { document.getElementById('editPinModal').classList.remove('open'); loadUsers(); alert('PIN mis à jour !'); }
+  else alert(d.message);
+}
+
+// ── Supprimer utilisateur ────────────────────────────────
+async function deleteUser(id, username) {
+  if (!confirm(`Supprimer l'utilisateur "${username}" ?`)) return;
+  const r = await fetch(`php/admin-users.php?id=${id}`, { method:'DELETE', headers:{'Content-Type':'application/json'}, body:JSON.stringify({admin_pin:adminPinUnlocked}) });
+  const d = await r.json();
+  if (d.success) loadUsers();
+  else alert(d.message);
+}
+
+// ── Raccourci Ctrl+U (toutes les pages) ─────────────────
+// Ce script est aussi injecté dans les autres pages via inclusion
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && e.key === 'u') { e.preventDefault(); window.location.href = 'admin-users.html'; }
+  // Saisie clavier du PIN sur l'écran de verrouillage
+  if (document.getElementById('lockScreen').style.display !== 'none') {
+    if (e.key >= '0' && e.key <= '9') lockKey(e.key);
+    else if (e.key === 'Backspace') lockKey('del');
+    else if (e.key === 'Enter') verifyAdminPin();
+    else if (e.key === 'Escape') lockKey('clear');
+  }
+});
+</script>
+</body>
+</html>

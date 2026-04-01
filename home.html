@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fournisseurs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            orangeMain:  '#f97316',
+            orangeDark:  '#ea580c',
+            blueMain:    '#3b82f6',
+            blueDark:    '#1d4ed8',
+          },
+          keyframes: {
+            'glow-pulse': {
+              '0%, 100%': { boxShadow: '0 0 0 0 rgba(249, 115, 22, 0.4)', borderColor: 'rgba(59, 130, 246, 0.4)' },
+              '50%':      { boxShadow: '0 0 20px 6px rgba(249, 115, 22, 0.35)', borderColor: 'rgba(59, 130, 246, 0.7)' }
+            },
+            'breathe': {
+              '0%, 100%': { transform: 'scale(1)' },
+              '50%':      { transform: 'scale(1.015)' }
+            }
+          },
+          animation: {
+            'glow-pulse': 'glow-pulse 4s ease-in-out infinite',
+            'breathe':    'breathe 6s ease-in-out infinite'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 min-h-screen">
+
+  <header class="sticky top-0 z-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800/60">
+    <div class="flex items-center h-14 px-4 sm:px-6">
+      
+      <!-- menu -->
+      <button class="p-2 -ml-2 rounded-xl text-slate-700 dark:text-slate-300 hover:text-orangeMain transition-colors">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+
+      <!-- barre de recherche animée infinie -->
+      <div class="flex-1 mx-3 sm:mx-6">
+        <div class="relative animate-breathe">
+          <input
+            type="search"
+            placeholder="Rechercher..."
+            class="w-full pl-11 pr-5 py-2.5 bg-white/70 dark:bg-slate-800/60 border-2 border-blueMain/40 rounded-xl text-base placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none animate-glow-pulse transition-all duration-300"
+          />
+          <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-orangeMain" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <main class="px-4 sm:px-6 py-5 space-y-3">
+    <a href="#" class="block bg-white dark:bg-slate-900 rounded-2xl px-5 py-4 border border-slate-200 dark:border-slate-800 hover:border-orangeMain/50 active:scale-[0.985] transition-all">
+      <p class="text-base sm:text-lg font-medium text-slate-900 dark:text-slate-100">Aciers Dupont SARL</p>
+    </a>
+    <a href="#" class="block bg-white dark:bg-slate-900 rounded-2xl px-5 py-4 border border-slate-200 dark:border-slate-800 hover:border-orangeMain/50 active:scale-[0.985] transition-all">
+      <p class="text-base sm:text-lg font-medium text-slate-900 dark:text-slate-100">Peintures Martin Pro</p>
+    </a>
+    <a href="#" class="block bg-white dark:bg-slate-900 rounded-2xl px-5 py-4 border border-slate-200 dark:border-slate-800 hover:border-orangeMain/50 active:scale-[0.985] transition-all">
+      <p class="text-base sm:text-lg font-medium text-slate-900 dark:text-slate-100">Électricité Laurent SAS</p>
+    </a>
+    <!-- ajoute les autres ici -->
+  </main>
+
+</body>
+</html>

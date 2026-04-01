@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AB.BAT – Fiche fournisseur</title>
+  <link rel="stylesheet" href="css/app.css"/>
+  <style>
+    .versement-row {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 8px;
+      background: var(--bg3);
+      transition: border-color .15s;
+    }
+    .versement-row:hover { border-color: var(--border2); }
+    .v-montant { font-family:'Barlow Condensed',sans-serif; font-size:20px; font-weight:700; }
+    .v-meta { font-size:12px; color:var(--text3); margin-top:3px; }
+    .v-note { font-size:13px; color:var(--text2); margin-top:6px; font-style:italic; }
+
+    .audit-row { padding:10px 0; border-bottom:1px solid var(--border); font-size:13px; }
+    .audit-row:last-child { border-bottom:none; }
+    .audit-action { display:inline-block; padding:2px 8px; border-radius:99px; font-size:11px; font-weight:600; margin-right:8px; }
+    .audit-versement { background:rgba(34,211,160,.12); color:#22d3a0; }
+    .audit-modif { background:rgba(249,115,22,.12); color:#f97316; }
+
+    .pin-dots { display:flex; gap:10px; justify-content:center; margin:16px 0; }
+    .pin-dot { width:14px; height:14px; border-radius:50%; background:var(--border2); transition:background .15s; }
+    .pin-dot.filled { background:var(--orange); }
+    .pin-pad { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; max-width:240px; margin:0 auto; }
+    .pin-btn { padding:14px; border-radius:10px; background:var(--bg3); border:1px solid var(--border); color:var(--text); font-size:18px; font-weight:600; cursor:pointer; transition:all .15s; font-family:'Barlow Condensed',sans-serif; }
+    .pin-btn:hover { background:var(--bg2); border-color:var(--orange); color:var(--orange); }
+    .pin-error { color:var(--red); font-size:13px; text-align:center; margin-top:8px; min-height:18px; }
+
+    .solde-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:99px; font-size:12px; font-weight:700; }
+    .solde-ok { background:rgba(34,211,160,.12); color:#22d3a0; border:1px solid rgba(34,211,160,.25); }
+    .solde-reste { background:rgba(249,115,22,.12); color:#f97316; border:1px solid rgba(249,115,22,.25); }
+  </style>
+</head>
+<body>
+
+
+<!-- Overlay sidebar mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">A</div>
+    <span class="logo-text"><span class="blue">AB.</span><span class="org">BAT</span></span>
+  </div>
+  <nav class="nav">
+    <a href="dashboard.html" class="nav-item">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Tableau de bord
+    </a>
+    <a href="fournisseurs.html" class="nav-item active">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+      Fournisseurs
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <a href="admin-users.html" class="nav-item" title="Administration" style="opacity:0.3;transition:opacity .2s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.3">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+      Admin
+    </a>
+    <a href="php/logout.php" class="nav-item">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      Déconnexion
+    </a>
+  </div>
+</aside>
+
+<div class="page">
+  <div class="page-inner" id="main">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="skel" style="height:18px;width:120px"></div>
+      <div class="skel" style="height:150px;border-radius:12px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL PIN ══ -->
+<div id="pinModal" class="modal-overlay">
+  <div class="modal" style="max-width:340px;text-align:center">
+    <div class="modal-header" style="justify-content:center;flex-direction:column;gap:6px;margin-bottom:16px">
+      <div style="width:46px;height:46px;border-radius:12px;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.2);display:flex;align-items:center;justify-content:center;margin:0 auto 8px">
+        <svg style="width:22px;height:22px;color:var(--orange)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+      </div>
+      <span class="modal-title">Entrez votre PIN</span>
+      <p style="font-size:12px;color:var(--text3)" id="pinSubtitle">Pour identifier l'auteur de la modification</p>
+    </div>
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot" id="d0"></div>
+      <div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div>
+      <div class="pin-dot" id="d3"></div>
+      <div class="pin-dot" id="d4"></div>
+    </div>
+    <div class="pin-pad">
+      <button class="pin-btn" onclick="pinKey('1')">1</button>
+      <button class="pin-btn" onclick="pinKey('2')">2</button>
+      <button class="pin-btn" onclick="pinKey('3')">3</button>
+      <button class="pin-btn" onclick="pinKey('4')">4</button>
+      <button class="pin-btn" onclick="pinKey('5')">5</button>
+      <button class="pin-btn" onclick="pinKey('6')">6</button>
+      <button class="pin-btn" onclick="pinKey('7')">7</button>
+      <button class="pin-btn" onclick="pinKey('8')">8</button>
+      <button class="pin-btn" onclick="pinKey('9')">9</button>
+      <button class="pin-btn" onclick="pinKey('del')">⌫</button>
+      <button class="pin-btn" onclick="pinKey('0')">0</button>
+      <button class="pin-btn" onclick="submitPin()" style="background:rgba(249,115,22,.15);border-color:rgba(249,115,22,.4);color:var(--orange);font-weight:800">✓</button>
+    </div>
+    <button onclick="closePinModal()" style="margin-top:10px;background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;text-decoration:underline">Annuler</button>
+    <div class="pin-error" id="pinError"></div>
+  </div>
+</div>
+
+<!-- ══ MODAL VERSEMENT ══ -->
+<div id="versModal" class="modal-overlay">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <span class="modal-title" id="versModalTitle">Ajouter un versement</span>
+      <button class="modal-close" onclick="closeVersModal()"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <input type="hidden" id="versId"/>
+    <div class="form-group">
+      <label class="form-label">Montant versé (FCFA) *</label>
+      <input id="versMontant" class="input-field" type="text" inputmode="numeric" placeholder="Ex : 50 000" oninput="fmtInput(this)"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Note / Référence</label>
+      <input id="versNote" class="input-field" type="text" placeholder="Référence de paiement, remarque…"/>
+    </div>
+    <p style="font-size:12px;color:var(--text3);margin-bottom:16px" id="versAuteurInfo"></p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeVersModal()">Annuler</button>
+      <button class="btn btn-primary" id="versSaveBtn" onclick="saveVersement()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL FOURNISSEUR EDIT (PIN requis) ══ -->
+<div id="editModal" class="modal-overlay">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <span class="modal-title">Modifier le fournisseur</span>
+      <button class="modal-close" onclick="document.getElementById('editModal').classList.remove('open')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <p id="editWho" style="font-size:12px;color:var(--orange);font-weight:600;margin-bottom:16px;padding:8px 12px;background:rgba(249,115,22,.08);border-radius:8px;border:1px solid rgba(249,115,22,.2)"></p>
+    <div class="form-group"><label class="form-label">Nom *</label><input id="eNom" class="input-field" type="text"/></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Téléphone</label><input id="eTel" class="input-field" type="text"/></div>
+      <div class="form-group"><label class="form-label">Email</label><input id="eEmail" class="input-field" type="email"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">Catégorie</label><select id="eCat" class="input-field"><option value="">— Choisir —</option></select></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Montant total (FCFA)</label><input id="eTotal" class="input-field" type="text" inputmode="numeric" oninput="fmtInput(this)"/></div>
+      <div class="form-group"><label class="form-label">Montant payé (FCFA)</label><input id="ePaye" class="input-field" type="text" inputmode="numeric" oninput="fmtInput(this)"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea id="eNotes" class="input-field"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="document.getElementById('editModal').classList.remove('open')">Annuler</button>
+      <button class="btn btn-primary" id="editSaveBtn" onclick="saveFournisseur()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL SET PIN ══ -->
+<div id="setPinModal" class="modal-overlay">
+  <div class="modal" style="max-width:360px;text-align:center">
+    <div class="modal-header" style="justify-content:space-between">
+      <span class="modal-title">Définir mon PIN</span>
+      <button class="modal-close" onclick="document.getElementById('setPinModal').classList.remove('open')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Votre PIN vous identifiera lors de chaque modification.</p>
+    <div class="form-group" style="text-align:left"><label class="form-label">Nouveau PIN (4 chiffres min.)</label><input id="newPin" class="input-field" type="password" placeholder="••••" maxlength="8"/></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="document.getElementById('setPinModal').classList.remove('open')">Annuler</button>
+      <button class="btn btn-primary" onclick="savePin()">Enregistrer le PIN</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const fmt     = v => new Intl.NumberFormat('fr-FR',{style:'decimal',maximumFractionDigits:0}).format(v)+' FCFA';
+const fmtDate = s => { const d=new Date(s); return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); };
+const fId     = new URLSearchParams(location.search).get('id');
+let fData     = null;
+let cats      = [];
+
+// ── PIN logic ────────────────────────────────────────────
+let pinBuffer = '';
+let pinCallback = null;
+
+function openPinModal(subtitle, callback) {
+  pinBuffer = '';
+  pinCallback = callback;
+  document.getElementById('pinSubtitle').textContent = subtitle || 'Pour identifier l\'auteur de la modification';
+  document.getElementById('pinError').textContent = '';
+  updatePinDots();
+  document.getElementById('pinModal').classList.add('open');
+}
+function closePinModal() { clearTimeout(pinAutoTimer); pinBuffer=''; document.getElementById('pinModal').classList.remove('open'); }
+
+function pinKey(k) {
+  if (k === 'del') { 
+    pinBuffer = pinBuffer.slice(0,-1); 
+    updatePinDots(); 
+    clearTimeout(pinAutoTimer);
+    return; 
+  }
+  if (k === 'ok') { if (pinBuffer.length >= 4) submitPin(); return; }
+  if (pinBuffer.length >= 5) return;
+  pinBuffer += k;
+  updatePinDots();
+  clearTimeout(pinAutoTimer);
+  if (pinBuffer.length === 5) {
+    // 5 chiffres → soumettre direct (admin)
+    submitPin();
+  } else if (pinBuffer.length === 4) {
+    // 4 chiffres → attendre 600ms, si pas de 5ème chiffre → soumettre (users)
+    pinAutoTimer = setTimeout(() => {
+      if (pinBuffer.length === 4) submitPin();
+    }, 600);
+  }
+}
+let pinAutoTimer = null;
+
+function updatePinDots() {
+  for (let i=0;i<5;i++) {
+    const el = document.getElementById('d'+i);
+    if (el) el.classList.toggle('filled', i < pinBuffer.length);
+  }
+}
+
+// Saisie clavier du PIN
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('pinModal').classList.contains('open')) return;
+  if (e.key >= '0' && e.key <= '9') pinKey(e.key);
+  else if (e.key === 'Backspace') pinKey('del');
+  else if (e.key === 'Enter') submitPin();
+  else if (e.key === 'Escape') closePinModal();
+});
+
+async function submitPin() {
+  const r = await fetch('php/verify-pin.php', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({pin:pinBuffer}) });
+  const d = await r.json();
+  if (d.success) {
+    document.getElementById('pinModal').classList.remove('open');
+    if (pinCallback) pinCallback(d.username);
+  } else {
+    document.getElementById('pinError').textContent = d.message;
+    clearTimeout(pinAutoTimer);
+    pinBuffer = '';
+    updatePinDots();
+    // Shake animation
+    document.querySelector('.pin-dots').style.animation='none';
+    setTimeout(()=>{document.querySelector('.pin-dots').style.animation='';},10);
+  }
+}
+
+// ── Formatage montant à la saisie ────────────────────────
+function fmtInput(el) {
+  const pos = el.selectionStart;
+  const before = el.value.length;
+  const raw = el.value.replace(/\D/g, '');
+  const formatted = raw ? parseInt(raw, 10).toLocaleString('fr-FR') : '';
+  el.value = formatted;
+  // Repositionner le curseur
+  const diff = el.value.length - before;
+  el.setSelectionRange(pos + diff, pos + diff);
+}
+
+function getNumVal(id) {
+  const v = document.getElementById(id).value.replace(/\s/g, '').replace(/\u202f/g, '').replace(/\u00a0/g, '');
+  return parseFloat(v) || 0;
+}
+
+function setNumVal(id, num) {
+  const el = document.getElementById(id);
+  el.value = num ? parseInt(num).toLocaleString('fr-FR') : '';
+}
+let editingVersId = null;
+
+function openAddVers() {
+  editingVersId = null;
+  document.getElementById('versModalTitle').textContent = 'Ajouter un versement';
+  document.getElementById('versMontant').value = '';
+  document.getElementById('versNote').value = '';
+  document.getElementById('versAuteurInfo').textContent = 'Ce versement sera enregistré sous votre nom de connexion.';
+  document.getElementById('versModal').classList.add('open');
+}
+
+function openEditVers(v) {
+  openPinModal('Entrez votre PIN pour modifier ce versement', (username) => {
+    editingVersId = v.id;
+    document.getElementById('versModalTitle').textContent = 'Modifier le versement';
+    setNumVal('versMontant', v.montant);
+    document.getElementById('versNote').value = v.note || '';
+    document.getElementById('versAuteurInfo').innerHTML = `<span style="color:var(--orange);font-weight:600">Modification par : ${username}</span>`;
+    document.getElementById('versModal').classList.add('open');
+  });
+}
+
+function closeVersModal() { document.getElementById('versModal').classList.remove('open'); }
+
+async function saveVersement() {
+  const montant = getNumVal('versMontant');
+  if (!montant || montant <= 0) { alert('Montant invalide.'); return; }
+  const note = document.getElementById('versNote').value;
+  const btn  = document.getElementById('versSaveBtn');
+  btn.textContent='…'; btn.disabled=true;
+
+  if (editingVersId) {
+    await fetch(`php/api.php?action=versement&id=${editingVersId}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({montant,note}) });
+  } else {
+    await fetch('php/api.php?action=versement', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({fournisseur_id:fId,montant,note}) });
+  }
+
+  btn.textContent='Enregistrer'; btn.disabled=false;
+  closeVersModal();
+  load();
+}
+
+  function openEditFournisseur() {
+  openPinModal('Entrez votre PIN pour identifier la modification', (username) => {
+    modifierUsername = username;
+    const opts = cats.map(c=>`<option value="${c.id}" ${c.id==fData.categorie_id?'selected':''}>${c.nom}</option>`).join('');
+    document.getElementById('eCat').innerHTML = '<option value="">— Choisir —</option>' + opts;
+    document.getElementById('eNom').value   = fData.nom;
+    document.getElementById('eTel').value   = fData.telephone || '';
+    document.getElementById('eEmail').value = fData.email || '';
+    setNumVal('eTotal', fData.montant_total);
+    setNumVal('ePaye',  fData.montant_paye);
+    document.getElementById('eNotes').value = fData.notes || '';
+    document.getElementById('editWho').textContent = `Modification par : ${username}`;
+    document.getElementById('editModal').classList.add('open');
+  });
+}
+
+async function saveFournisseur() {
+  const nom = document.getElementById('eNom').value.trim();
+  if (!nom) { alert('Nom obligatoire.'); return; }
+  const body = {
+    nom,
+    telephone: document.getElementById('eTel').value,
+    email: document.getElementById('eEmail').value,
+    categorie_id: document.getElementById('eCat').value,
+    montant_total: getNumVal('eTotal'),
+    montant_paye:  getNumVal('ePaye'),
+    notes: document.getElementById('eNotes').value
+  };
+  const btn = document.getElementById('editSaveBtn');
+  btn.textContent='…'; btn.disabled=true;
+  await fetch(`php/api.php?action=fournisseur&id=${fId}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  btn.textContent='Enregistrer'; btn.disabled=false;
+  document.getElementById('editModal').classList.remove('open');
+  load();
+}
+
+// ── Set PIN ───────────────────────────────────────────────
+async function savePin() {
+  const pin = document.getElementById('newPin').value;
+  const r = await fetch('php/set-pin.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin})});
+  const d = await r.json();
+  if (d.success) { document.getElementById('setPinModal').classList.remove('open'); alert('PIN enregistré !'); }
+  else alert(d.message);
+}
+
+// ── Load fiche ────────────────────────────────────────────
+async function load() {
+  const [fRes, cRes] = await Promise.all([
+    fetch(`php/api.php?action=fournisseur&id=${fId}`),
+    fetch('php/api.php?action=categories')
+  ]);
+  const { data: f } = await fRes.json();
+  const { data: c } = await cRes.json();
+  fData = f; cats = c;
+
+  const restant   = f.montant_total - f.montant_paye;
+  const rawPct    = f.montant_total > 0 ? Math.round(f.montant_paye / f.montant_total * 100) : 0;
+  const pct       = Math.min(100, rawPct);
+  const isSolde   = rawPct >= 100;
+  const color     = f.categorie_couleur || '#94a3b8';
+  const restColor = isSolde ? '#22d3a0' : '#f97316';
+  document.title  = `AB.BAT – ${f.nom}`;
+
+  // Versements HTML
+  const versHTML = f.versements.length === 0
+    ? '<p style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0">Aucun versement enregistré.</p>'
+    : f.versements.map(v => `
+      <div class="versement-row">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div>
+            <div class="v-montant" style="color:var(--green)">+${fmt(v.montant)}</div>
+            <div class="v-meta">
+              <strong style="color:var(--orange)">${v.auteur_nom}</strong>
+              &nbsp;·&nbsp; ${fmtDate(v.created_at)}
+              ${v.updated_at !== v.created_at ? `<span style="color:var(--text3);font-size:11px"> (modifié ${fmtDate(v.updated_at)})</span>` : ''}
+            </div>
+            ${v.note ? `<div class="v-note">"${v.note}"</div>` : ''}
+          </div>
+          <button onclick='openEditVers(${JSON.stringify(v)})' class="btn btn-ghost" style="padding:7px;min-width:auto;flex-shrink:0" title="Modifier">
+            <svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          </button>
+        </div>
+      </div>`).join('');
+
+  // Audit HTML
+  const auditHTML = f.audit.length === 0
+    ? '<p style="color:var(--text3);font-size:13px">Aucun historique.</p>'
+    : f.audit.map(a => {
+        const isMod = a.action.includes('modif');
+        return `<div class="audit-row">
+          <span class="audit-action ${isMod?'audit-modif':'audit-versement'}">${a.action.replace('_',' ')}</span>
+          <strong style="color:var(--text)">${a.auteur_nom}</strong>
+          <span style="color:var(--text3)"> · ${fmtDate(a.created_at)}</span>
+          ${a.detail ? `<div style="font-size:12px;color:var(--text3);margin-top:3px">${a.detail}</div>` : ''}
+        </div>`;
+      }).join('');
+
+  document.getElementById('main').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+      <a href="fournisseurs.html" style="display:inline-flex;align-items:center;gap:6px;color:var(--text3);font-size:13px;text-decoration:none;transition:color .15s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'">
+        <svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Retour
+      </a>
+    </div>
+
+    <!-- En-tête fournisseur -->
+    <div class="card" style="padding:26px;margin-bottom:16px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,${color}10 0%,transparent 70%);pointer-events:none"></div>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:16px">
+          <div class="avatar" style="background:${color}18;border:2px solid ${color}35;color:${color}">${f.nom.charAt(0).toUpperCase()}</div>
+          <div>
+            <h1 class="display" style="font-size:26px;font-weight:800;margin-bottom:8px">${f.nom}</h1>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span class="cat-badge" style="background:${color}15;color:${color};border:1px solid ${color}30">${f.categorie_nom||'Sans catégorie'}</span>
+              <span class="solde-badge ${restant<=0?'solde-ok':'solde-reste'}">${restant<=0?'✓ Soldé':'En cours'}</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${f.telephone?`<a href="tel:${f.telephone}" class="btn btn-ghost">${f.telephone}</a>`:''}
+          ${f.email?`<a href="mailto:${f.email}" class="btn btn-ghost">${f.email}</a>`:''}
+          <button class="btn btn-ghost" onclick="openEditFournisseur()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            Modifier
+          </button>
+        </div>
+      </div>
+      ${f.notes?`<p style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);font-size:14px;color:var(--text2);line-height:1.7">${f.notes}</p>`:''}
+    </div>
+
+    <!-- KPIs -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px">
+      <div class="kpi-card" style="--accent:#3b82f6">
+        <div class="kpi-label">Montant total</div>
+        <div class="kpi-value display" style="color:#3b82f6;font-size:18px">${fmt(f.montant_total)}</div>
+      </div>
+      <div class="kpi-card" style="--accent:#22d3a0">
+        <div class="kpi-label">Montant payé</div>
+        <div class="kpi-value display" style="color:#22d3a0;font-size:18px">${fmt(f.montant_paye)}</div>
+      </div>
+      <div class="kpi-card" style="--accent:${restColor}">
+        <div class="kpi-label">Restant à payer</div>
+        <div class="kpi-value display" style="color:${restColor};font-size:18px">${fmt(restant)}</div>
+      </div>
+    </div>
+
+    <!-- Barre progression -->
+    <div class="card" style="padding:20px;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span style="font-size:13px;color:var(--text2)">Progression du paiement</span>
+        <span class="display" style="font-size:24px;font-weight:800;color:${restColor}">
+          ${isSolde ? '✓ Soldé' : pct + '%'}
+        </span>
+      </div>
+      <div style="height:8px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden">
+        <div id="progBar" data-w="${pct}" style="height:100%;border-radius:99px;background:${isSolde?'#22d3a0':color};transition:width 1.2s cubic-bezier(.4,0,.2,1);width:0%"></div>
+      </div>
+    </div>
+
+    <!-- Grille bas : versements + audit -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+      <!-- Versements -->
+      <div class="card" style="padding:22px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+          <h2 class="display" style="font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text3)">
+            Versements <span style="color:var(--text2)">(${f.versements.length})</span>
+          </h2>
+          <button class="btn btn-primary" style="padding:7px 13px;font-size:12px" onclick="openAddVers()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Versement
+          </button>
+        </div>
+        ${versHTML}
+      </div>
+
+      <!-- Historique -->
+      <div class="card" style="padding:22px">
+        <h2 class="display" style="font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:18px">
+          Historique des modifications
+        </h2>
+        ${auditHTML}
+      </div>
+
+    </div>
+  `;
+
+  setTimeout(()=>{const b=document.getElementById('progBar');if(b)b.style.width=b.dataset.w+'%';},100);
+}
+
+load();
+</script>
+
+<script>
+// ── Menu hamburger mobile ──────────────────────
+function openSidebar() {
+  document.querySelector('.sidebar').classList.add('open');
+  document.getElementById('sidebarOverlay').classList.add('open');
+}
+function closeSidebar() {
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+// Fermer sidebar si on clique sur un lien nav
+document.querySelectorAll('.nav-item').forEach(el => {
+  el.addEventListener('click', closeSidebar);
+});
+// Afficher hamburger seulement sur mobile
+function checkHamburger() {
+  const btn = document.getElementById('hamburgerBtn');
+  if (btn) btn.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+}
+window.addEventListener('resize', checkHamburger);
+checkHamburger();
+</script>
+
+</body>
+</html>
