@@ -5,11 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AB.BAT – Tableau de bord</title>
   <link rel="stylesheet" href="css/app.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-
-<!-- Overlay sidebar mobile -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
 <aside class="sidebar">
@@ -32,7 +31,7 @@
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
       Admin
     </a>
-    <a href="php/logout.php" class="nav-item">
+    <a href="#" class="nav-item" onclick="logout()">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
       Déconnexion
     </a>
@@ -53,7 +52,6 @@
       </a>
     </div>
 
-    <!-- KPIs -->
     <div class="kpi-grid" id="kpiGrid">
       <div class="kpi-card"><div class="skel" style="height:11px;width:55%;margin-bottom:12px"></div><div class="skel" style="height:28px;width:40%"></div></div>
       <div class="kpi-card"><div class="skel" style="height:11px;width:55%;margin-bottom:12px"></div><div class="skel" style="height:28px;width:60%"></div></div>
@@ -61,60 +59,65 @@
       <div class="kpi-card"><div class="skel" style="height:11px;width:55%;margin-bottom:12px"></div><div class="skel" style="height:28px;width:60%"></div></div>
     </div>
 
-    <!-- Grille bas -->
     <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:16px">
-
       <div class="card" style="padding:26px">
         <h2 class="display" style="font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:22px">Répartition par catégorie</h2>
-        <div id="catList">
-          <div class="skel" style="height:13px;margin-bottom:20px"></div>
-          <div class="skel" style="height:13px;margin-bottom:20px;width:80%"></div>
-          <div class="skel" style="height:13px;width:60%"></div>
-        </div>
+        <div id="catList"><div class="skel" style="height:13px;margin-bottom:20px"></div><div class="skel" style="height:13px;margin-bottom:20px;width:80%"></div><div class="skel" style="height:13px;width:60%"></div></div>
       </div>
-
       <div class="card" style="padding:26px">
         <h2 class="display" style="font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:22px">Progression globale</h2>
-        <div id="progressBlock">
-          <div class="skel" style="height:130px;border-radius:10px"></div>
-        </div>
+        <div id="progressBlock"><div class="skel" style="height:130px;border-radius:10px"></div></div>
       </div>
-
     </div>
+
   </div>
 </div>
 
 <script>
-const fmt = v => new Intl.NumberFormat('fr-FR', { style: 'decimal', maximumFractionDigits: 0 }).format(v) + ' FCFA';
-const fmt2 = v => new Intl.NumberFormat('fr-FR', { style: 'decimal', maximumFractionDigits: 0 }).format(v) + ' FCFA';
+const SUPABASE_URL = 'https://evswmrofxjiygrezobwu.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_UNLWlnZdQaNtKs2N-U_rLQ_d56nqHEX';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Auth check
+if (!localStorage.getItem('abbat_session')) window.location.href = 'index.html';
+
+function logout() { localStorage.removeItem('abbat_session'); window.location.href = 'index.html'; }
+
+const fmt = v => new Intl.NumberFormat('fr-FR').format(v) + ' FCFA';
 
 async function load() {
-  const r = await fetch('php/api.php?action=dashboard');
-  const { data: d } = await r.json();
-  const pct = d.montant_total > 0 ? Math.min(100, Math.round(d.montant_paye / d.montant_total * 100)) : 0;
-  const isSolde = d.montant_total > 0 && d.montant_paye >= d.montant_total;
+  // Charger fournisseurs
+  const { data: fournisseurs } = await sb.from('fournisseurs').select('*, categories(nom, couleur)');
+  // Charger catégories
+  const { data: categories } = await sb.from('categories').select('*');
+
+  const total_fournisseurs = fournisseurs ? fournisseurs.length : 0;
+  const montant_total = fournisseurs ? fournisseurs.reduce((s, f) => s + parseFloat(f.montant_total || 0), 0) : 0;
+  const montant_paye  = fournisseurs ? fournisseurs.reduce((s, f) => s + parseFloat(f.montant_paye  || 0), 0) : 0;
+  const montant_restant = montant_total - montant_paye;
+  const pct = montant_total > 0 ? Math.min(100, Math.round(montant_paye / montant_total * 100)) : 0;
+  const isSolde = montant_total > 0 && montant_paye >= montant_total;
+
+  // Répartition par catégorie
+  const parCat = {};
+  if (fournisseurs) fournisseurs.forEach(f => {
+    const cid = f.categorie_id || 'none';
+    if (!parCat[cid]) parCat[cid] = { nom: f.categories?.nom || 'Sans catégorie', couleur: f.categories?.couleur || '#94a3b8', total: 0, nb: 0 };
+    parCat[cid].total += parseFloat(f.montant_total || 0);
+    parCat[cid].nb++;
+  });
 
   document.getElementById('kpiGrid').innerHTML = `
-    <div class="kpi-card" style="--accent:#3b82f6">
-      <div class="kpi-label">Fournisseurs</div>
-      <div class="kpi-value display">${d.total_fournisseurs}</div>
-    </div>
-    <div class="kpi-card" style="--accent:#3b82f6">
-      <div class="kpi-label">Montant total</div>
-      <div class="kpi-value display" style="color:#3b82f6;font-size:21px">${fmt(d.montant_total)}</div>
-    </div>
-    <div class="kpi-card" style="--accent:#22d3a0">
-      <div class="kpi-label">Montant payé</div>
-      <div class="kpi-value display" style="color:#22d3a0;font-size:21px">${fmt(d.montant_paye)}</div>
-    </div>
-    <div class="kpi-card" style="--accent:#f97316">
-      <div class="kpi-label">Restant à payer</div>
-      <div class="kpi-value display" style="color:#f97316;font-size:21px">${fmt(d.montant_restant)}</div>
-    </div>`;
+    <div class="kpi-card" style="--accent:#3b82f6"><div class="kpi-label">Fournisseurs</div><div class="kpi-value display">${total_fournisseurs}</div></div>
+    <div class="kpi-card" style="--accent:#3b82f6"><div class="kpi-label">Montant total</div><div class="kpi-value display" style="color:#3b82f6;font-size:21px">${fmt(montant_total)}</div></div>
+    <div class="kpi-card" style="--accent:#22d3a0"><div class="kpi-label">Montant payé</div><div class="kpi-value display" style="color:#22d3a0;font-size:21px">${fmt(montant_paye)}</div></div>
+    <div class="kpi-card" style="--accent:#f97316"><div class="kpi-label">Restant à payer</div><div class="kpi-value display" style="color:#f97316;font-size:21px">${fmt(montant_restant)}</div></div>`;
 
-  document.getElementById('catList').innerHTML = d.par_categorie.length
-    ? d.par_categorie.map(c => {
-        const p = d.montant_total > 0 ? Math.round(c.total / d.montant_total * 100) : 0;
+  const catArr = Object.values(parCat);
+  document.getElementById('catList').innerHTML = catArr.length
+    ? catArr.map(c => {
+        const p = montant_total > 0 ? Math.round(c.total / montant_total * 100) : 0;
         return `<div class="cat-bar">
           <div class="cat-bar-header">
             <span style="display:flex;align-items:center;gap:8px">
@@ -141,11 +144,11 @@ async function load() {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div style="background:rgba(34,211,160,.07);border:1px solid rgba(34,211,160,.18);border-radius:10px;padding:16px">
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:rgba(34,211,160,.6);margin-bottom:6px;font-weight:600">Payé</div>
-        <div class="display" style="font-size:16px;font-weight:700;color:#22d3a0">${fmt2(d.montant_paye)}</div>
+        <div class="display" style="font-size:16px;font-weight:700;color:#22d3a0">${fmt(montant_paye)}</div>
       </div>
       <div style="background:rgba(249,115,22,.07);border:1px solid rgba(249,115,22,.18);border-radius:10px;padding:16px">
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:rgba(249,115,22,.6);margin-bottom:6px;font-weight:600">Restant</div>
-        <div class="display" style="font-size:16px;font-weight:700;color:#f97316">${fmt2(d.montant_restant)}</div>
+        <div class="display" style="font-size:16px;font-weight:700;color:#f97316">${fmt(montant_restant)}</div>
       </div>
     </div>`;
 

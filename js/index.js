@@ -1,73 +1,111 @@
-// ── Toggle mot de passe ─────────────────────────────────────
-const passwordInput = document.getElementById('password');
-const toggleBtn     = document.getElementById('togglePassword');
-const eyeOpen       = document.getElementById('eyeOpen');
-const eyeClosed     = document.getElementById('eyeClosed');
+// =============================================
+// AB.BAT — Login (Supabase)
+// =============================================
 
-toggleBtn.addEventListener('click', () => {
-  const isPassword = passwordInput.type === 'password';
-  passwordInput.type = isPassword ? 'text' : 'password';
-  eyeOpen.classList.toggle('hidden');
-  eyeClosed.classList.toggle('hidden');
-});
-
-// ── Soumission du formulaire ─────────────────────────────────
-const form    = document.getElementById('loginForm');
-const btn     = document.getElementById('loginBtn');
-const btnText = document.getElementById('btnText');
-const spinner = document.getElementById('spinner');
-
-// Message d'erreur (créé dynamiquement)
-function showError(msg) {
-  let el = document.getElementById('loginError');
-  if (!el) {
-    el = document.createElement('p');
-    el.id = 'loginError';
-    el.style.cssText = 'color:#f97316;font-size:0.9rem;text-align:center;margin-top:-0.5rem;';
-    form.insertBefore(el, btn);
-  }
-  el.textContent = msg;
-}
-
-function clearError() {
-  const el = document.getElementById('loginError');
-  if (el) el.textContent = '';
-}
-
-form.addEventListener('submit', async function(e) {
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
   e.preventDefault();
-  clearError();
 
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value;
+  const btn      = document.getElementById('loginBtn');
+  const btnText  = document.getElementById('btnText');
+  const spinner  = document.getElementById('spinner');
 
-  // UI → état chargement
   btn.disabled = true;
-  btnText.classList.add('hidden');
+  btnText.style.display = 'none';
   spinner.classList.remove('hidden');
 
   try {
-    const response = await fetch('php/traitement-login.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    });
+    const SUPABASE_URL = 'https://evswmrofxjiygrezobwu.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_UNLWlnZdQaNtKs2N-U_rLQ_d56nqHEX';
+    const { createClient } = supabase;
+    const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const data = await response.json();
+    // Récupérer l'utilisateur par username
+    const { data: users, error } = await sb
+      .from('users')
+      .select('*')
+      .eq('username', username)
+      .limit(1);
 
-    if (data.success) {
-      // Redirige vers la page d'accueil
-      window.location.href = data.redirect || 'home.html';
-    } else {
-      showError(data.message || 'Identifiants incorrects.');
+    if (error || !users || users.length === 0) {
+      showError('Nom d\'utilisateur ou mot de passe incorrect.');
+      return;
     }
 
+    const user = users[0];
+
+    // Vérifier le mot de passe avec bcrypt (via API)
+    const ok = await verifyPassword(password, user.password_hash);
+    if (!ok) {
+      showError('Nom d\'utilisateur ou mot de passe incorrect.');
+      return;
+    }
+
+    // Sauvegarder la session
+    localStorage.setItem('abbat_session', JSON.stringify({
+      id: user.id,
+      username: user.username,
+      role: user.role
+    }));
+
+    window.location.href = 'dashboard.html';
+
   } catch (err) {
-    showError('Impossible de contacter le serveur. Vérifiez que WAMP est démarré.');
+    showError('Erreur de connexion. Réessayez.');
     console.error(err);
   } finally {
     btn.disabled = false;
-    btnText.classList.remove('hidden');
+    btnText.style.display = '';
     spinner.classList.add('hidden');
+  }
+});
+
+// Vérification bcrypt côté client via une fonction simple
+// On utilise une comparaison via l'API Supabase Edge ou bcryptjs
+async function verifyPassword(password, hash) {
+  // Charger bcryptjs dynamiquement
+  if (typeof dcodeIO === 'undefined') {
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js');
+  }
+  return dcodeIO.bcrypt.compareSync(password, hash);
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+function showError(msg) {
+  let el = document.getElementById('loginError');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'loginError';
+    el.style.cssText = 'color:#f43f5e;font-size:13px;text-align:center;margin-top:12px;padding:10px;background:rgba(244,63,94,.1);border-radius:8px;border:1px solid rgba(244,63,94,.2)';
+    document.getElementById('loginForm').appendChild(el);
+  }
+  el.textContent = msg;
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = false;
+  document.getElementById('btnText').style.display = '';
+  document.getElementById('spinner').classList.add('hidden');
+}
+
+// Toggle password
+document.getElementById('togglePassword').addEventListener('click', function() {
+  const input = document.getElementById('password');
+  const open  = document.getElementById('eyeOpen');
+  const closed = document.getElementById('eyeClosed');
+  if (input.type === 'password') {
+    input.type = 'text';
+    open.classList.add('hidden');
+    closed.classList.remove('hidden');
+  } else {
+    input.type = 'password';
+    open.classList.remove('hidden');
+    closed.classList.add('hidden');
   }
 });
