@@ -5,67 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AB.BAT – Administration utilisateurs</title>
   <link rel="stylesheet" href="css/app.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
   <style>
-    .user-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 18px;
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      margin-bottom: 8px;
-      gap: 12px;
-      transition: border-color .15s;
-    }
-    .user-row:hover { border-color: var(--border2); }
-
-    .user-avatar {
-      width: 40px; height: 40px;
-      border-radius: 10px;
-      background: rgba(249,115,22,.12);
-      border: 1px solid rgba(249,115,22,.2);
-      display: flex; align-items: center; justify-content: center;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 700; font-size: 17px;
-      color: var(--orange);
-      flex-shrink: 0;
-    }
-    .user-avatar.admin-av {
-      background: rgba(59,130,246,.12);
-      border-color: rgba(59,130,246,.25);
-      color: var(--blue);
-    }
-
-    .pin-status {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 3px 9px; border-radius: 99px;
-      font-size: 11px; font-weight: 600;
-    }
-    .pin-ok  { background: rgba(34,211,160,.1); color: #22d3a0; border: 1px solid rgba(34,211,160,.2); }
-    .pin-no  { background: rgba(244,63,94,.1);  color: #f43f5e; border: 1px solid rgba(244,63,94,.2); }
-
-    .pin-pad { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; max-width:220px; margin:12px auto 0; }
-    .pin-btn { padding:13px; border-radius:9px; background:var(--bg3); border:1px solid var(--border); color:var(--text); font-size:17px; font-weight:700; cursor:pointer; transition:all .15s; font-family:'Barlow Condensed',sans-serif; }
-    .pin-btn:hover { border-color:var(--orange); color:var(--orange); background:rgba(249,115,22,.05); }
-    .pin-dots { display:flex; gap:8px; justify-content:center; margin:14px 0 4px; }
-    .pin-dot { width:12px; height:12px; border-radius:50%; background:var(--border2); transition:background .15s; }
+    .user-row { display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;gap:12px;transition:border-color .15s; }
+    .user-row:hover { border-color:var(--border2); }
+    .user-avatar { width:40px;height:40px;border-radius:10px;background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.2);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;color:var(--orange);flex-shrink:0; }
+    .user-avatar.admin-av { background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.25);color:var(--blue); }
+    .pin-status { display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600; }
+    .pin-ok { background:rgba(34,211,160,.1);color:#22d3a0;border:1px solid rgba(34,211,160,.2); }
+    .pin-no { background:rgba(244,63,94,.1);color:#f43f5e;border:1px solid rgba(244,63,94,.2); }
+    .pin-pad { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:220px;margin:12px auto 0; }
+    .pin-btn { padding:13px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:17px;font-weight:700;cursor:pointer;transition:all .15s;font-family:'Barlow Condensed',sans-serif; }
+    .pin-btn:hover { border-color:var(--orange);color:var(--orange);background:rgba(249,115,22,.05); }
+    .pin-dots { display:flex;gap:8px;justify-content:center;margin:14px 0 4px; }
+    .pin-dot { width:12px;height:12px;border-radius:50%;background:var(--border2);transition:background .15s; }
     .pin-dot.filled { background:var(--orange); }
-    .pin-error { color:var(--red); font-size:12px; text-align:center; min-height:16px; margin-top:6px; }
-
-    .section-title {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 14px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 1.2px;
-      color: var(--text3);
-      margin-bottom: 14px;
-    }
+    .pin-error { color:var(--red);font-size:12px;text-align:center;min-height:16px;margin-top:6px; }
+    .section-title { font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--text3);margin-bottom:14px; }
   </style>
 </head>
 <body>
 
-
-<!-- Overlay sidebar mobile -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
 <aside class="sidebar">
@@ -88,7 +49,7 @@
     </a>
   </nav>
   <div class="sidebar-footer">
-    <a href="php/logout.php" class="nav-item">
+    <a href="#" class="nav-item" onclick="logout()">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
       Déconnexion
     </a>
@@ -140,16 +101,12 @@
       <div class="pin-error" id="lockError"></div>
     </div>
 
-    <!-- Contenu admin (caché jusqu'à PIN validé) -->
+    <!-- Contenu admin -->
     <div id="adminContent" style="display:none">
-
-      <!-- Liste utilisateurs -->
       <div style="margin-bottom:28px">
         <div class="section-title">Utilisateurs enregistrés</div>
         <div id="userList"><p style="color:var(--text3);font-size:13px">Chargement…</p></div>
       </div>
-
-      <!-- Ajouter utilisateur -->
       <div class="card" style="padding:24px">
         <div class="section-title">Ajouter un utilisateur</div>
         <div class="form-row" style="margin-bottom:14px">
@@ -158,18 +115,22 @@
             <input id="newUsername" class="input-field" type="text" placeholder="Ex : Brou, Konan…"/>
           </div>
           <div class="form-group" style="margin-bottom:0">
-            <label class="form-label">Code PIN (4 chiffres min.)</label>
-            <input id="newUserPin" class="input-field" type="password" placeholder="••••" maxlength="8"/>
+            <label class="form-label">Mot de passe</label>
+            <input id="newUserPassword" class="input-field" type="password" placeholder="Mot de passe"/>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">PIN (chiffres)</label>
+            <input id="newUserPin" class="input-field" type="password" placeholder="Ex : 12345" maxlength="8"/>
           </div>
         </div>
-        <button class="btn btn-primary" onclick="addUser()" id="addBtn">
+        <button id="addBtn" class="btn btn-primary" onclick="addUser()">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
           Ajouter l'utilisateur
         </button>
         <p id="addMsg" style="margin-top:10px;font-size:13px;min-height:18px"></p>
       </div>
-
     </div>
+
   </div>
 </div>
 
@@ -193,9 +154,15 @@
 </div>
 
 <script>
-let adminPinUnlocked = '';
+const SUPABASE_URL = 'https://evswmrofxjiygrezobwu.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_UNLWlnZdQaNtKs2N-U_rLQ_d56nqHEX';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ── Lock screen PIN ──────────────────────────────────────
+if (!localStorage.getItem('abbat_session')) window.location.href = 'index.html';
+function logout() { localStorage.removeItem('abbat_session'); window.location.href = 'index.html'; }
+
+let adminPinUnlocked = '';
 let lockBuffer = '';
 
 function lockKey(k) {
@@ -214,31 +181,51 @@ function updateLockDots() {
 }
 
 async function verifyAdminPin() {
-  const r = await fetch('php/verify-pin.php', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({pin:lockBuffer}) });
-  const d = await r.json();
-  if (d.success && d.username === 'admin') {
+  if (!lockBuffer) return;
+  document.getElementById('lockError').textContent = '';
+
+  // Récupérer le hash PIN de l'admin depuis Supabase
+  const { data: users, error } = await sb
+    .from('users')
+    .select('id, username, pin, role')
+    .eq('username', 'admin')
+    .limit(1);
+
+  if (error || !users || users.length === 0) {
+    document.getElementById('lockError').textContent = 'Erreur de connexion.';
+    return;
+  }
+
+  const admin = users[0];
+
+  if (!admin.pin) {
+    document.getElementById('lockError').textContent = 'Aucun PIN défini pour l\'admin.';
+    return;
+  }
+
+  // Vérifier le PIN avec bcrypt
+  const ok = dcodeIO.bcrypt.compareSync(lockBuffer, admin.pin);
+
+  if (ok) {
     adminPinUnlocked = lockBuffer;
     document.getElementById('lockScreen').style.display = 'none';
     document.getElementById('adminContent').style.display = 'block';
     loadUsers();
   } else {
-    document.getElementById('lockError').textContent = d.username && d.username !== 'admin' ? 'Accès réservé à l\'administrateur.' : (d.message || 'PIN incorrect.');
+    document.getElementById('lockError').textContent = 'PIN incorrect.';
     lockBuffer = '';
     updateLockDots();
   }
 }
 
-// ── Charger utilisateurs ─────────────────────────────────
 async function loadUsers() {
-  const r = await fetch('php/admin-users.php');
-  const { data } = await r.json();
-
-  document.getElementById('userList').innerHTML = data.map(u => `
+  const { data } = await sb.from('users').select('id, username, role, pin').order('id');
+  document.getElementById('userList').innerHTML = (data||[]).map(u => `
     <div class="user-row">
       <div class="user-avatar ${u.username==='admin'?'admin-av':''}">${u.username.charAt(0).toUpperCase()}</div>
       <div style="flex:1">
         <div style="font-weight:600;font-size:15px">${u.username} ${u.username==='admin'?'<span style="font-size:11px;color:var(--blue);background:rgba(59,130,246,.1);padding:2px 7px;border-radius:99px;border:1px solid rgba(59,130,246,.2)">admin</span>':''}</div>
-        <span class="pin-status ${u.has_pin?'pin-ok':'pin-no'}">${u.has_pin?'✓ PIN défini':'✗ Pas de PIN'}</span>
+        <span class="pin-status ${u.pin?'pin-ok':'pin-no'}">${u.pin?'✓ PIN défini':'✗ Pas de PIN'}</span>
       </div>
       <div style="display:flex;gap:6px">
         <button class="btn btn-ghost" style="padding:7px 12px;font-size:12px" onclick="openEditPin(${u.id},'${u.username}')">
@@ -251,37 +238,40 @@ async function loadUsers() {
           Supprimer
         </button>` : ''}
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-// ── Ajouter utilisateur ──────────────────────────────────
 async function addUser() {
   const username = document.getElementById('newUsername').value.trim();
+  const password = document.getElementById('newUserPassword').value.trim();
   const pin      = document.getElementById('newUserPin').value.trim();
   const msg      = document.getElementById('addMsg');
   const btn      = document.getElementById('addBtn');
 
-  if (!username || !pin) { msg.style.color='var(--red)'; msg.textContent='Nom et PIN obligatoires.'; return; }
+  if (!username || !password || !pin) { msg.style.color='var(--red)'; msg.textContent='Tous les champs sont obligatoires.'; return; }
 
   btn.textContent = '…'; btn.disabled = true;
-  const r = await fetch('php/admin-users.php?action=add', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({admin_pin:adminPinUnlocked, username, pin}) });
-  const d = await r.json();
-  btn.textContent = '+ Ajouter l\'utilisateur'; btn.disabled = false;
 
-  if (d.success) {
+  const password_hash = dcodeIO.bcrypt.hashSync(password, 10);
+  const pin_hash      = dcodeIO.bcrypt.hashSync(pin, 10);
+
+  const { error } = await sb.from('users').insert({ username, password_hash, pin: pin_hash, role: 'user' });
+
+  btn.textContent = 'Ajouter l\'utilisateur'; btn.disabled = false;
+
+  if (!error) {
     msg.style.color = 'var(--green)';
-    msg.textContent = d.data.message;
+    msg.textContent = `Utilisateur "${username}" ajouté avec succès !`;
     document.getElementById('newUsername').value = '';
+    document.getElementById('newUserPassword').value = '';
     document.getElementById('newUserPin').value = '';
     loadUsers();
   } else {
     msg.style.color = 'var(--red)';
-    msg.textContent = d.message;
+    msg.textContent = error.message.includes('unique') ? 'Ce nom d\'utilisateur existe déjà.' : error.message;
   }
 }
 
-// ── Modifier PIN ─────────────────────────────────────────
 function openEditPin(id, username) {
   document.getElementById('editPinUserId').value = id;
   document.getElementById('editPinTitle').textContent = `PIN de ${username}`;
@@ -292,26 +282,21 @@ function openEditPin(id, username) {
 async function saveEditPin() {
   const id  = document.getElementById('editPinUserId').value;
   const pin = document.getElementById('editPinValue').value.trim();
-  const r   = await fetch(`php/admin-users.php?id=${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({admin_pin:adminPinUnlocked, pin}) });
-  const d   = await r.json();
-  if (d.success) { document.getElementById('editPinModal').classList.remove('open'); loadUsers(); alert('PIN mis à jour !'); }
-  else alert(d.message);
+  if (!pin) { alert('PIN obligatoire.'); return; }
+  const pin_hash = dcodeIO.bcrypt.hashSync(pin, 10);
+  const { error } = await sb.from('users').update({ pin: pin_hash }).eq('id', id);
+  if (!error) { document.getElementById('editPinModal').classList.remove('open'); loadUsers(); alert('PIN mis à jour !'); }
+  else alert(error.message);
 }
 
-// ── Supprimer utilisateur ────────────────────────────────
 async function deleteUser(id, username) {
   if (!confirm(`Supprimer l'utilisateur "${username}" ?`)) return;
-  const r = await fetch(`php/admin-users.php?id=${id}`, { method:'DELETE', headers:{'Content-Type':'application/json'}, body:JSON.stringify({admin_pin:adminPinUnlocked}) });
-  const d = await r.json();
-  if (d.success) loadUsers();
-  else alert(d.message);
+  await sb.from('users').delete().eq('id', id);
+  loadUsers();
 }
 
-// ── Raccourci Ctrl+U (toutes les pages) ─────────────────
-// Ce script est aussi injecté dans les autres pages via inclusion
 document.addEventListener('keydown', e => {
   if (e.ctrlKey && e.key === 'u') { e.preventDefault(); window.location.href = 'admin-users.html'; }
-  // Saisie clavier du PIN sur l'écran de verrouillage
   if (document.getElementById('lockScreen').style.display !== 'none') {
     if (e.key >= '0' && e.key <= '9') lockKey(e.key);
     else if (e.key === 'Backspace') lockKey('del');
